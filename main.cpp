@@ -3,6 +3,7 @@
 #include <vector>
 #include <algorithm>
 #include <map>
+#include <set>
 
 using namespace std;
 
@@ -17,11 +18,19 @@ const int LEAF_SPACE = 2e5+2;
 const int INF = MAX;
 
 int n, m, r, k;
-int tree[TREE_SIZE];
+int tree[100];
 int leaf[LEAF_SPACE];
 map<int,vector<int>> position;
 int a[LEAF_SPACE];
 int level_size[LEVELS];
+
+int find_lowest_power(int p, int n){
+    for(int i=p; i>=1; --i){
+        if(level_size[i] < n){
+            return i+1;
+        }
+    }
+}
 
 void clear_tree(int start, int last_position){
     if(start >= last_position){
@@ -40,16 +49,15 @@ void insert_and_update(int where){
     }
 }
 
-int query(int where, int start, int end, int x, int y){
-    if(x <= start && y >= end){
-        return tree[where];
+int query(int source, int start_range, int end_range, int l, int r ){
+    if(l <= start_range && r >= end_range){
+        return tree[source];
     }
-    int mid = (start + end)/ 2, result = 0;
-
-    if(x <= mid) result += query(2*where, start, mid, x, y);
-    if(y > mid) result += query(2*where, mid+1, end, x, y);
-
-    return result;
+    if(r < start_range || end_range < l){
+        return 0;
+    }
+    int mid =(end_range + start_range) /2;
+    return query(2*source, start_range, mid, l, r) + query(2*source+1, mid + 1, end_range, l, r);
 }
 
 void fill_tree(){
@@ -60,7 +68,7 @@ void fill_tree(){
        position[leaf[i]].push_back(i);
         // cout << a[i] << "    " <<  i << endl;
     }
-    int R = (r+1) * 2 - 1, x, result = 0;
+    int R = find_lowest_power(k, m), x, result = 0;
     
     for(int i=1; i<=m; ++i){
         x = position[a[i]].front();
@@ -68,7 +76,7 @@ void fill_tree(){
             position[a[i]].erase(position[a[i]].begin());
         }
         
-        result += query(1, 1, R, x+r+1, m+r);
+        result += query(1, 1, R, x+1, m);
         cout << " a: " << a[i] <<  " position: " << x + r << " "  << " result ";
         insert_and_update(x+r);
         cout << result << endl;
